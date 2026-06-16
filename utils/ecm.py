@@ -26,7 +26,6 @@ async def get_bearer_token(force=False):
 
     async with AsyncClient() as session:
         resp = await session.post(settings.ecm_token_url, data=data)
-        # resp.raise_for_status()
     token_data = resp.json()
 
     token = token_data.get("access_token")

@@ -13,30 +13,31 @@ dp = Dispatcher()
 
 @dp.bot_started()
 async def on_bot_started(event: BotStarted) -> None:
-    """Пользователь нажал кнопку «Начать» в диалоге с ботом."""
     logger.info(event)
-
-    payload = event.payload
     max_id = event.user.user_id
+    payload = event.payload
 
-    decrypted_payload = decrypt_rc4(payload, settings.SECRET_KEY)
-    try:
-        user_id = decrypted_payload.split("_", 1)[1]
-        await ecos_change_user_max_id(max_id, user_id)
+    if payload is not None:
+        try:
+            decrypted_payload = decrypt_rc4(payload, settings.SECRET_KEY)
+            user_id = decrypted_payload.split("_", 1)[1]
+            await ecos_change_user_max_id(max_id, user_id)
+            await bot.send_message(
+                user_id=max_id,
+                text="Привет! Я сохранил твой MAX ID в ECM.",
+            )
+            logger.info("Saved max_id to ecm", exc_info=True, extra={"max_id": max_id, "user_id": user_id})
+        except Exception as e:
+            logger.warning(f"FAILED to save max_id to ecm {e}", exc_info=True, extra={"max_id": max_id, "user_id": user_id})
+            await bot.send_message(
+                user_id=max_id,
+                text="Привет! Я не смог сохранить твой MAX ID в ECM.",
+            )
+    else:
         await bot.send_message(
             user_id=max_id,
-            text="Привет! Я сохранил твой MAX ID в ECM.",
+            text="Привет! Рад приветствовать тебя в ИТ.Москве!",
         )
-        logger.info("Saved max_id to ecm", exc_info=True, extra={"max_id": max_id, "user_id": user_id})
-    except Exception as e:
-        logger.warning("FAILED to save max_id to ecm", exc_info=True, extra={"max_id": max_id, "user_id": user_id})
-        await bot.send_message(
-            user_id=max_id,
-            text="Привет! Я не смог сохранить твой MAX ID в ECM.",
-        )
-    
-
-    
 
 
 async def main():
