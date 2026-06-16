@@ -1,0 +1,10 @@
+services:
+  ecm_max_bot:
+    image: ecm_max_bot
+    build:
+      context: .
+    container_name: ecm_max_bot
+    env_file:
+      - .env
+    command: ["python", "main.py"]
+    restart: always

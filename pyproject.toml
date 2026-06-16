@@ -1,0 +1,13 @@
+[project]
+name = "ecm-max-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+    "maxapi>=1.2.0",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "python-json-logger>=4.1.0",
+]
