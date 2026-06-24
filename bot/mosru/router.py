@@ -5,6 +5,7 @@ from maxapi.types import MessageCreated
 from utils.ecm import ecm_client
 from config import settings
 from utils.redis import redis_client
+from logger import logger
 
 
 router = Router(router_id="mosru")
@@ -35,7 +36,9 @@ async def save_token(event: MessageCreated):
                     "X-Mes-Subsystem": "proftechw_app"
                 }
             )
+            
+        logger.info(f"mosru {resp.status_code}", exc_info=True, extra=resp.json())
         await event.bot.send_message(
             chat_id=event.from_user.user_id,
-            text=f"{resp.json()}"
+            text=f"{resp.status_code}"
         )
