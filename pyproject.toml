@@ -10,4 +10,5 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
     "python-json-logger>=4.1.0",
+    "redis>=8.0.1",
 ]

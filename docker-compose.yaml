@@ -8,3 +8,19 @@ services:
       - .env
     command: ["python", "main.py"]
     restart: always
+    networks:
+      - default
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7
+    container_name: ecm_bot_redis
+    restart: always
+    networks:
+      - default
+
+networks:
+  default:
+    name: ecm_bot_network
+    driver: bridge
