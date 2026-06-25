@@ -20,6 +20,7 @@ async def save_token(event: MessageCreated):
             await cache.set("mosru_token", token)
             token_value_from_redis = await cache.get("mosru_token")
 
+        logger.info(f"mosru token saved in redis {token_value_from_redis}")
         # Тестовый запрос
         async with AsyncClient() as client:
             resp = await client.post(
