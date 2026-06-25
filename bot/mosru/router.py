@@ -28,7 +28,7 @@ async def save_token(event: MessageCreated):
             json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
         )
 
-        media = InputMediaBuffer(buffer=excel_file, filename="data.xlsx")
+        media = InputMediaBuffer(buffer=excel_file.getvalue(), filename="data.xlsx")
         await event.message.answer(
             text="Вот твоя таблица:",
             attachments=[media],
