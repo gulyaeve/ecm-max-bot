@@ -37,7 +37,7 @@ async def save_token(event: MessageCreated):
                 }
             )
             
-        logger.info(f"mosru {resp.status_code}", exc_info=True, extra=resp.json())
+        logger.info(f"mosru {resp.status_code}")
         await event.bot.send_message(
             chat_id=event.from_user.user_id,
             text=f"{resp.json()}"
