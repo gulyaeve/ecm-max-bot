@@ -1,10 +1,11 @@
 from pathlib import Path
 
 from maxapi.dispatcher import Router
-from maxapi import F
-from maxapi.types import MessageCreated
+from maxapi import F, Bot
+from maxapi.types import Command, InputMediaBuffer, MessageCreated
 from utils.ecm import ecm_client
 from config import settings
+from utils.http_utils import download_file_http
 from utils.redis import redis_client
 from logger import logger
 
@@ -40,17 +41,32 @@ async def save_token(event: MessageCreated):
                 text=f"Не смог сохранить токен для {settings.ECM_LOGIN_MOSRU_TOKEN}",
             )
 
-        # excel_file = await download_file_http(
-        #     url="https://prof.mos.ru/back/api/applications/report",
-        #     token=token_value_from_redis,
-        #     json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
-        # )
+
+@router.message_created(Command("report"))
+async def send_file_with_reports(event: MessageCreated):
+    
+    ecm_user_login = await ecm_client.get_user_login_from_ecm(event.from_user.user_id)
+
+    if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
+        async with redis_client as cache:
+            token_value_from_redis = await cache.get("mosru_token")
+        excel_file = await download_file_http(
+            url="https://prof.mos.ru/back/api/applications/report",
+            token=token_value_from_redis,
+            json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
+        )
+
+        media = InputMediaBuffer(buffer=excel_file.getvalue(), filename="report.xlsx")
+        await event.message.answer(
+            text="Отчёт:",
+            attachments=[media]
+        )
+                
+       
 
         # file_path = UPLOAD_DIR / f"{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}.xlsx"
 
-        # with open(file_path, "wb") as f:
-        #     f.write(excel_file.getvalue())
-
+        
         # await event.message.answer(
         #     text=f"Я сохранил таблицу в {file_path}",
         # )

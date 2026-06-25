@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     ECM_CLIENT_SECRET: str
 
     ECM_LOGIN_MOSRU_TOKEN: str
+    ECM_LOGINS_FOR_REPORT: list[str]
 
     @property
     def ecm_token_url(self):
