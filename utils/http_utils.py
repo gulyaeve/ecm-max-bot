@@ -10,7 +10,7 @@ async def download_file_http(url: str, token: str, json: dict, method: Literal["
     file_buffer = io.BytesIO()
 
     async with http_client as session:
-        async with session.stream(method, url, headers=headers, follow_redirects=True) as response:
+        async with session.stream(method, url, headers=headers, json=json, follow_redirects=True) as response:
             response.raise_for_status()
             
             async for chunk in response.aiter_bytes():
