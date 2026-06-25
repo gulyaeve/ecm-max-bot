@@ -1,3 +1,4 @@
+from httpx import AsyncClient
 from maxapi.dispatcher import Router
 from maxapi import F
 from maxapi.types import InputMediaBuffer, MessageCreated
@@ -22,11 +23,13 @@ async def save_token(event: MessageCreated):
 
         logger.info(f"mosru token saved in redis {token_value_from_redis}")
 
-        excel_file = await download_file_http(
-            url="https://prof.mos.ru/back/api/applications/report",
-            token=token_value_from_redis,
-            json={"learningYearId":1002678612,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
-        )
+        async with AsyncClient() as client:
+            excel_file = await download_file_http(
+                url="https://prof.mos.ru/back/api/applications/report",
+                token=token_value_from_redis,
+                json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]},
+                http_client=client
+            )
 
         media = InputMediaBuffer(buffer=excel_file, filename="data.xlsx")
         await event.message.answer(
