@@ -26,7 +26,7 @@ async def save_token(event: MessageCreated):
         excel_file = await download_file_http(
             url="https://prof.mos.ru/back/api/applications/report",
             token=token_value_from_redis,
-            json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
+            json={"learningYearId":1002678612,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
         )
 
         media = InputMediaBuffer(buffer=excel_file, filename="data.xlsx")
