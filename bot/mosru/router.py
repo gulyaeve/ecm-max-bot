@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+from httpx import HTTPStatusError
 from maxapi.dispatcher import Router
 from maxapi import F
 from maxapi.types import Command, InputMedia, MessageCreated
@@ -9,6 +10,7 @@ from config import settings
 from utils.http_utils import download_file_http
 from utils.redis import redis_client
 from logger import logger
+from utils.max_bot import bot
 
 
 router = Router(router_id="mosru")
@@ -51,11 +53,22 @@ async def send_file_with_reports(event: MessageCreated):
     if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
         async with redis_client as cache:
             token_value_from_redis = await cache.get("mosru_token")
-        excel_file = await download_file_http(
-            url="https://prof.mos.ru/back/api/applications/report",
-            token=token_value_from_redis,
-            json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
-        )
+        try:
+            excel_file = await download_file_http(
+                url="https://prof.mos.ru/back/api/applications/report",
+                token=token_value_from_redis,
+                json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
+            )
+        except HTTPStatusError as exc:
+            if exc.response.status_code == 401:
+                logger.warning("Ошибка: Невалидный Bearer токен!")
+                
+                await bot.send_message(
+                    user_id=settings.MAX_ID_TOKEN_HOLDER,
+                    text="Добрый день! Обновите, пожалуйста, токен.\n\nС наилучшими пожеланиями, ИТ.Москва"
+                )
+                
+            logger.warning("Ошибка внешнего сервера!")
 
         file_path = UPLOAD_DIR / f"{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}.xlsx"
 

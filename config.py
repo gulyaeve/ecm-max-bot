@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     @property
     def redis_url(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
+    
+    MAX_ID_TOKEN_HOLDER: int
 
     ECM_BASE_URL: str = "https://itmoscow.educom.ru"
     ECM_REALM: str = "ecos-app"

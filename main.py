@@ -1,13 +1,9 @@
-from maxapi import Bot, Dispatcher
-
-from config import settings
 from logger import logger
 from bot.mosru.router import router as mosru_router
 from bot.ecm.router import router as ecm_router
+from utils.max_bot import dp, bot
 
 
-bot = Bot(settings.MAX_BOT_TOKEN)
-dp = Dispatcher()
 
 
 dp.include_routers(
