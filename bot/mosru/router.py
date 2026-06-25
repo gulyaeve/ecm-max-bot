@@ -1,9 +1,9 @@
+from datetime import datetime
 from pathlib import Path
 
 from maxapi.dispatcher import Router
 from maxapi import F
-from maxapi.enums import UploadType
-from maxapi.types import Command, InputMediaBuffer, MessageCreated
+from maxapi.types import Command, InputMedia, MessageCreated
 from utils.ecm import ecm_client
 from config import settings
 from utils.http_utils import download_file_http
@@ -57,13 +57,17 @@ async def send_file_with_reports(event: MessageCreated):
             json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
         )
 
-        media = InputMediaBuffer(buffer=excel_file.getvalue(), filename="report.xlsx", type=UploadType.FILE)
+        file_path = UPLOAD_DIR / f"{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}.xlsx"
+
+        with open(file_path, "wb") as f:
+            f.write(excel_file.getvalue())
+
+        media = InputMedia(file_path)
         await event.message.answer(
-            text="Отчёт:",
+            text="Отчёт",
             attachments=[media]
         )
                 
-       
 
         # file_path = UPLOAD_DIR / f"{datetime.now().strftime("%d_%m_%Y_%H_%M_%S")}.xlsx"
 
