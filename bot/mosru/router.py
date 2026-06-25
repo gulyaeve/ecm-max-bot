@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from maxapi.dispatcher import Router
-from maxapi import F, Bot
+from maxapi import F
+from maxapi.enums import UploadType
 from maxapi.types import Command, InputMediaBuffer, MessageCreated
 from utils.ecm import ecm_client
 from config import settings
@@ -56,7 +57,7 @@ async def send_file_with_reports(event: MessageCreated):
             json={"learningYearId":1002678188,"rklCheckStatuses":[],"applicationPriority":[],"page":0,"size":10,"sort":["registrationDateTime,desc"]}
         )
 
-        media = InputMediaBuffer(buffer=excel_file.getvalue(), filename="report.xlsx")
+        media = InputMediaBuffer(buffer=excel_file.getvalue(), filename="report.xlsx", type=UploadType.FILE)
         await event.message.answer(
             text="Отчёт:",
             attachments=[media]
