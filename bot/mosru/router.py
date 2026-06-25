@@ -24,7 +24,7 @@ async def save_token(event: MessageCreated):
         async with AsyncClient() as client:
             resp = await client.post(
                 url="https://prof.mos.ru/back/api/staff/search",
-                data={
+                json={
                     "page":0,
                     "search":"",
                     "size":100,
