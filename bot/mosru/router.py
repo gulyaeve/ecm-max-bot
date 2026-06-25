@@ -40,5 +40,5 @@ async def save_token(event: MessageCreated):
             
         logger.info(f"mosru {resp.status_code}", exc_info=True, extra=resp.json())
         await event.message.answer(
-            text=f"{resp.status_code}\n\n{resp.json()}"
+            text=f"{resp.status_code}"
         )
