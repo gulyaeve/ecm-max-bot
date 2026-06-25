@@ -8,6 +8,8 @@ services:
       - .env
     command: ["python", "main.py"]
     restart: always
+    volumes:
+     - ./temp/:/src/temp
     networks:
       - default
     depends_on:
