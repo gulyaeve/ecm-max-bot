@@ -1,4 +1,3 @@
-from httpx import AsyncClient
 from maxapi.dispatcher import Router
 from maxapi import F
 from maxapi.types import InputMediaBuffer, MessageCreated
