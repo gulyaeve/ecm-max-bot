@@ -15,7 +15,7 @@ router = Router(router_id="mosru")
 async def save_token(event: MessageCreated):
     ecm_user_login = await ecm_client.get_user_login_from_ecm(event.from_user.user_id)
     if ecm_user_login == settings.ECM_LOGIN_MOSRU_TOKEN:
-        token = event.message.body.text.split("token", 1)[1]
+        token = event.message.body.text.split("token ", 1)[1]
         async with redis_client as cache:
             await cache.set("mosru_token", token)
             token_value_from_redis = await cache.get("mosru_token")
