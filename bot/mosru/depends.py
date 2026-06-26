@@ -29,7 +29,7 @@ async def create_reports_zip() -> Optional[str]:
         with zipfile.ZipFile(
             final_zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED
         ) as main_zip:
-            for i in range(1, 5):
+            for i in range(1, 6):
                 excel_file = await download_file_http(
                     url="https://prof.mos.ru/back/api/applications/report",
                     token=token_value_from_redis,
