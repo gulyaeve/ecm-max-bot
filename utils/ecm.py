@@ -1,4 +1,5 @@
 from time import time
+from typing import Sequence
 from config import settings
 from httpx import AsyncClient
 
@@ -82,6 +83,39 @@ class ECMClient:
         resp = await self._client.post(url, json=data, headers=headers)
         result = resp.json()
         return result["records"][0]["attributes"]["login"]
+    
+    async def add_records(self, records: Sequence):
+        url = f"{settings.ecm_records_base}/mutate"
+        token = await self._get_bearer_token()
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        data = {
+            "records": records,
+            "version": 1,
+        }
+
+        resp = await self._client.post(url, json=data, headers=headers)
+        result = resp.json()
+        return result
+    
+    async def get_data(self, query: dict):
+        url = f"{settings.ecm_records_base}/query"
+        token = await self._get_bearer_token()
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        resp = await self._client.post(url, json=query, headers=headers)
+        result = resp.json()
+        return result
 
 
 http_client = AsyncClient()

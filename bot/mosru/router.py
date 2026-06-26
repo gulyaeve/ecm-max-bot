@@ -36,13 +36,14 @@ async def save_token(event: MessageCreated):
 
 @router.message_created(Command("report"))
 async def send_file_with_reports(event: MessageCreated):
-
     ecm_user_login = await ecm_client.get_user_login_from_ecm(event.from_user.user_id)
 
     if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
         try:
             # file_path = await create_reports_zip()
-            file_path = await create_report_xlsx()
+            async with redis_client as cache:
+                token = await cache.get("mosru_token")
+            file_path = await create_report_xlsx(token)
 
             media = InputMedia(file_path)
             await event.message.answer(
