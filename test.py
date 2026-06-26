@@ -19,19 +19,38 @@ async def main():
     # print(result)
     token = os.getenv("TOKEN_TEST")
 
-    data_to_ecm = await report_process_to_ecm(token)
-    print(len(data_to_ecm))
-    pprint(data_to_ecm[-1])
+    await report_process_to_ecm(token)
+    # print(len(data_to_ecm))
+    # for applicant in data_to_ecm:
+    #     record = await ecm_client.get_data(
+    #         query={
+    #             "records": ["emodel/admission-committee:itmoscow-statements@54441081222"],
+    #             "attributes": [applicant["statement-applicant-name"]],
+    #             "version": 1,
+    #         }
+    #     )
+    #     if record['records'][0]['attributes']['statement-applicant-name'] is None:
 
-    
-    upload_records = await ecm_client.add_records([data_to_ecm[-1]])
-    print(upload_records)
+        
+    # # pprint(data_to_ecm[-1])
+
+    # # upload_records = await ecm_client.add_records([data_to_ecm[-1]])
+    # # print(upload_records)
+
+    # record = await ecm_client.get_data(
+    #     query={
+    #         "records": ["emodel/admission-committee:itmoscow-statements@54441081222"],
+    #         "attributes": ["statement-applicant-name"],
+    #         "version": 1,
+    #     }
+    # )
+    # print(record)
 
     # chunk_size = 100
     # chunks = list(batched(data_to_ecm, chunk_size))
     # for chunk in chunks:
     #     upload_records = await ecm_client.add_records(chunk)
-    
+
     # df_result.to_excel('merged_output.xlsx', index=False, engine='openpyxl')
 
 

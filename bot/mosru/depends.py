@@ -1,3 +1,4 @@
+from asyncio import sleep
 from datetime import datetime
 import io
 from pathlib import Path
@@ -290,9 +291,21 @@ async def report_process_to_ecm(token: str) -> list:
 
     for index, row in df_result.iterrows():
         if row["id"] != 0:
+            record = await ecm_client.get_data(
+                query={
+                    "records": [f"emodel/admission-committee:itmoscow-statements@{row["id"]}"],
+                    "attributes": ["statement-applicant-name"],
+                    "version": 1,
+                }
+            )
+            if record['records'][0]['attributes']['statement-applicant-name'] is None:
+                ecm_id = "emodel/admission-committee:itmoscow-statements@"
+            else:
+                ecm_id = f"emodel/admission-committee:itmoscow-statements@{row['id']}"
             application = {
                 # "id": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
-                "id": "emodel/admission-committee:itmoscow-statements@",
+                # "id": "emodel/admission-committee:itmoscow-statements@",
+                "id": ecm_id,
                 "attributes": {
                     "statement-type": f"{statement_type_options.get(row['Тип'], '0')}",
                     "statement-status": f"{statement_status_options.get(row['Статус'], '0')}",
@@ -304,13 +317,13 @@ async def report_process_to_ecm(token: str) -> list:
                     "statement-registration-date": datetime.strptime(row['Зарегистрирован'], '%d.%m.%Y %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S+03:00'),
                     "statement-applicant-name": f"{row['ФИО']}",
                     "statement-applicant-sex": f"{statement_applicant_sex_options.get(row['Пол'])}",
-                    "statement-applicant-citizenship": f"{row['Гражданство']}",
-                    "statement-applicant-passport-type": f"{row['Тип документа, удостоверяющего личность']}",
-                    "statement-applicant-passport-series": f"{row['Серия ДУЛ']}",
-                    "statement-applicant-passport-number": f"{row['Номер ДУЛ']}",
-                    "statement-applicant-passport-issued": f"{row['Кем выдан ДУЛ']}",
+                    "statement-applicant-citizenship": f"{row['Гражданство'] if pd.notna(row['Гражданство']) else ''}",
+                    "statement-applicant-passport-type": f"{row['Тип документа, удостоверяющего личность'] if pd.notna(row['Тип документа, удостоверяющего личность']) else ''}",
+                    "statement-applicant-passport-series": f"{row['Серия ДУЛ'] if pd.notna(row['Серия ДУЛ']) else ''}",
+                    "statement-applicant-passport-number": f"{row['Номер ДУЛ'] if pd.notna(row['Номер ДУЛ']) else ''}",
+                    "statement-applicant-passport-issued": f"{row['Кем выдан ДУЛ'] if pd.notna(row['Кем выдан ДУЛ']) else ''}",
                     "statement-applicant-passport-issued-date1": datetime.strptime(row['Дата выдачи ДУЛ'], '%d.%m.%Y').strftime('%Y-%m-%d') if pd.notna(row['Дата выдачи ДУЛ']) else None,
-                    "statement-applicant-passport-issued-code": f"{row['Код подразделения ДУЛ']}",
+                    "statement-applicant-passport-issued-code": f"{row['Код подразделения ДУЛ'] if pd.notna(row['Код подразделения ДУЛ']) else ''}",
                     "statement-specialization": f"{specs.get(row['Специальность'], '')}",
                     "statement-education-form": f"{statement_education_form_options.get(row['Форма обучения'], '0')}",
                     "statement-financing": f"{statement_financing_options.get(row['Финансирование'], '0')}",
@@ -352,5 +365,10 @@ async def report_process_to_ecm(token: str) -> list:
                     "_workspace": "admission-committee",
                 },
             }
-            data_to_ecm.append(application)
-    return data_to_ecm
+            try:
+                await sleep(0.1)
+                await ecm_client.add_records([application])
+            except Exception as e:
+                logger.warning(f"failed {row['id']} {e}")
+            # data_to_ecm.append(application)
+    # return data_to_ecm
