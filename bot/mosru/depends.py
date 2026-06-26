@@ -12,6 +12,8 @@ from logger import logger
 from httpx import HTTPStatusError
 from config import settings
 from utils.max_bot import bot
+from utils.ecm import http_client
+import pandas as pd
 
 
 UPLOAD_DIR = Path("temp")
@@ -65,3 +67,60 @@ async def create_reports_zip() -> Optional[str]:
             )
 
         logger.warning("Ошибка внешнего сервера!")
+
+
+async def create_report_xlsx() -> str:
+    async with redis_client as cache:
+        token_value_from_redis = await cache.get("mosru_token")
+
+    excel_file = await download_file_http(
+        url="https://prof.mos.ru/back/api/applications/report",
+        token=token_value_from_redis,
+        json={
+            "learningYearId": 1002678188,
+            "rklCheckStatuses": [],
+            "applicationPriority": [],
+            "page": 0,
+            "size": 10,
+            "sort": ["registrationDateTime,desc"],
+        },
+        http_client=http_client,
+    )
+
+    resp = await http_client.post(
+        url="https://prof.mos.ru/back/api/applications/search",
+        json={
+            "learningYearId": 1002678188,
+            "rklCheckStatuses": [],
+            "applicationPriority": [],
+            "page": 0,
+            "size": 1000,
+            "sort": ["registrationDateTime,desc"],
+        },
+        headers={
+            "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+            "Authorization": f"Bearer {token_value_from_redis}",  # Передаем токен авторизации
+            "X-Mes-Subsystem": "proftechw_app",
+        },
+    )
+
+    df_excel = pd.read_excel(excel_file, header=1, dtype=str)
+
+    # print(df_excel.head())
+
+    df_json = pd.DataFrame(resp.json()["content"])
+    # print(df_json.head())
+
+    # excel_key_column = df_excel.columns[6] 
+    df_result = pd.merge(
+        df_excel, 
+        df_json, 
+        left_on="Номер", 
+        right_on='registrationNumber', 
+        how='left' # 'left' сохранит ВСЕ строки из Excel и добавит данные из JSON там, где совпали номера
+    )
+
+    file_path = UPLOAD_DIR / f"report_{datetime.now().strftime('%d_%m_%Y_%H_%M_%S')}.xlsx"
+
+    df_result.to_excel(file_path, index=False, engine='openpyxl')
+    return file_path

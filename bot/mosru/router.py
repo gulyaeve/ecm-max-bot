@@ -1,7 +1,7 @@
 from maxapi.dispatcher import Router
 from maxapi import F
 from maxapi.types import Command, InputMedia, MessageCreated
-from bot.mosru.depends import create_reports_zip
+from bot.mosru.depends import create_report_xlsx
 from utils.ecm import ecm_client
 from config import settings
 from utils.redis import redis_client
@@ -41,7 +41,8 @@ async def send_file_with_reports(event: MessageCreated):
 
     if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
         try:
-            file_path = await create_reports_zip()
+            # file_path = await create_reports_zip()
+            file_path = await create_report_xlsx()
 
             media = InputMedia(file_path)
             await event.message.answer(
