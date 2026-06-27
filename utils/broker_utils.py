@@ -1,7 +1,17 @@
-from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
+from asyncio import run
+from concurrent.futures import ProcessPoolExecutor
 
-from config import settings
+# from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
 
-result_backend = RedisAsyncResultBackend(redis_url=settings.redis_url)
+# from config import settings
 
-broker = RedisStreamBroker(url=settings.redis_url).with_result_backend(result_backend)
+# result_backend = RedisAsyncResultBackend(redis_url=settings.redis_url)
+
+# broker = RedisStreamBroker(url=settings.redis_url).with_result_backend(result_backend)
+
+process_pool = ProcessPoolExecutor(max_workers=4)
+
+
+def sync_ecm_report(token: str):
+    # Запускаем асинхронную функцию внутри отдельного процесса
+    return run(report_process_to_ecm(token))

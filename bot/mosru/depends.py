@@ -11,7 +11,6 @@ from httpx import HTTPStatusError
 
 from config import settings
 from logger import logger
-from utils.broker_utils import broker
 from utils.ecm import ecm_client, http_client
 from utils.http_utils import download_file_http
 from utils.max_bot import bot
@@ -121,7 +120,6 @@ async def create_report_xlsx(token: str) -> str:
     return file_path
 
 
-@broker.task
 async def report_process_to_ecm(token: str):
     excel_file = await download_file_http(
         url="https://prof.mos.ru/back/api/applications/report",

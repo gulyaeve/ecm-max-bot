@@ -1,10 +1,13 @@
+import asyncio
+
 from maxapi import F
 from maxapi.dispatcher import Router
 from maxapi.types import Command, InputMedia, MessageCreated
 
-from bot.mosru.depends import create_report_xlsx, report_process_to_ecm
+from bot.mosru.depends import create_report_xlsx
 from config import settings
 from logger import logger
+from utils.broker_utils import process_pool, sync_ecm_report
 from utils.ecm import ecm_client
 from utils.redis import redis_client
 
@@ -63,7 +66,12 @@ async def sync_applications_from_proftech_to_ecm(event: MessageCreated):
             async with redis_client as cache:
                 token = await cache.get("mosru_token")
 
-            await report_process_to_ecm.kiq(token)
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                process_pool,
+                sync_ecm_report,
+                token,
+            )
 
         except Exception as e:
             logger.warning(f"Sync error {e}")
