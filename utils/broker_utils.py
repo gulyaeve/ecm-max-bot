@@ -1,6 +1,8 @@
 from asyncio import run
 from concurrent.futures import ProcessPoolExecutor
 
+from bot.mosru.depends import report_process_to_ecm
+
 # from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
 
 # from config import settings
