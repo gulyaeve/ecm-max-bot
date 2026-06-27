@@ -8,7 +8,7 @@ from maxapi.types import Command, InputMedia, MessageCreated
 from bot.mosru.depends import create_report_xlsx
 from config import settings
 from logger import logger
-from utils.broker_utils import process_pool, sync_ecm_report
+from utils.broker_utils import sync_ecm_report
 from utils.ecm import ecm_client
 from utils.redis import redis_client
 
