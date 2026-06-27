@@ -12,6 +12,7 @@ services:
      - ./temp/:/src/temp
     networks:
       - default
+      - citeck_network
     depends_on:
       - redis
 
@@ -26,3 +27,6 @@ networks:
   default:
     name: ecm_bot_network
     driver: bridge
+  citeck_network:
+    name: citeck_network_default
+    external: true
