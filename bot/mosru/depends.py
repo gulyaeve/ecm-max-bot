@@ -1,22 +1,20 @@
+import io
+import zipfile
 from asyncio import sleep
 from datetime import datetime
-import io
 from pathlib import Path
 from typing import Optional
-import zipfile
 
 import anyio
-
-from utils.http_utils import download_file_http
-from logger import logger
-from httpx import HTTPStatusError
-from config import settings
-from utils.max_bot import bot
-from utils.ecm import http_client
-from utils.ecm import ecm_client
 import pandas as pd
-from utils.broker_utils import broker
+from httpx import HTTPStatusError
 
+from config import settings
+from logger import logger
+from utils.broker_utils import broker
+from utils.ecm import ecm_client, http_client
+from utils.http_utils import download_file_http
+from utils.max_bot import bot
 
 UPLOAD_DIR = Path("temp")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -124,7 +122,7 @@ async def create_report_xlsx(token: str) -> str:
 
 
 @broker.task
-async def report_process_to_ecm(token: str) -> list:
+async def report_process_to_ecm(token: str):
     excel_file = await download_file_http(
         url="https://prof.mos.ru/back/api/applications/report",
         token=token,
@@ -392,7 +390,7 @@ async def report_process_to_ecm(token: str) -> list:
                 },
             }
             try:
-                await sleep(0.1)
+                await sleep(0.2)
                 await ecm_client.add_records([application])
             except Exception as e:
                 logger.warning(f"failed {row['id']} {e}")
