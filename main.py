@@ -1,8 +1,8 @@
-from logger import logger
-from bot.mosru.router import router as mosru_router
 from bot.ecm.router import router as ecm_router
-from utils.max_bot import dp, bot
-
+from bot.mosru.router import router as mosru_router
+from logger import logger
+from utils.broker_utils import broker
+from utils.max_bot import bot, dp
 
 dp.include_routers(
     mosru_router,
@@ -12,6 +12,7 @@ dp.include_routers(
 
 async def main():
     logger.info("Hello from ecm-max-bot!")
+    await broker.startup()
     await dp.start_polling(bot)
 
 
