@@ -1,6 +1,5 @@
 import io
 import zipfile
-from asyncio import sleep
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Optional
@@ -174,8 +173,6 @@ async def report_process_to_ecm(
     df_result["id"] = df_result["id"].fillna(0)
     df_result["id"] = df_result["id"].astype("Int64")
 
-    data_to_ecm = []
-
     statement_type_options = {
         "Восстановление": "1",
         "Направление на зачисление": "2",
@@ -192,12 +189,12 @@ async def report_process_to_ecm(
     #     "В архиве": "4",
     #     "Другое": "0",
     # }
-    statement_status_options = { 
-        "Принято": "1", 
-        "Издан приказ": "2", 
-        "Зачислен": "3", 
-        "В архиве": "4", 
-        "Другое": "0", 
+    statement_status_options = {
+        "Принято": "1",
+        "Издан приказ": "2",
+        "Зачислен": "3",
+        "В архиве": "4",
+        "Другое": "0",
         "Ожидает подтверждения": "5",
         "На рассмотрении": "6",
         "Рекомендован к зачислению": "7",
