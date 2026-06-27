@@ -1,12 +1,12 @@
-from maxapi.dispatcher import Router
 from maxapi import F
+from maxapi.dispatcher import Router
 from maxapi.types import Command, InputMedia, MessageCreated
-from bot.mosru.depends import create_report_xlsx
-from utils.ecm import ecm_client
-from config import settings
-from utils.redis import redis_client
-from logger import logger
 
+from bot.mosru.depends import create_report_xlsx, report_process_to_ecm
+from config import settings
+from logger import logger
+from utils.ecm import ecm_client
+from utils.redis import redis_client
 
 router = Router(router_id="mosru")
 
@@ -40,7 +40,6 @@ async def send_file_with_reports(event: MessageCreated):
 
     if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
         try:
-            # file_path = await create_reports_zip()
             async with redis_client as cache:
                 token = await cache.get("mosru_token")
             file_path = await create_report_xlsx(token)
@@ -52,3 +51,22 @@ async def send_file_with_reports(event: MessageCreated):
         except Exception as e:
             logger.warning(f"Report create error {e}")
             await event.message.answer("Произошла ошибка при формировании отчёта")
+
+
+@router.message_created(Command("sync_applications"))
+async def sync_applications_from_proftech_to_ecm(event: MessageCreated):
+    ecm_user_login = await ecm_client.get_user_login_from_ecm(event.from_user.user_id)
+
+    if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
+        try:
+            await event.message.answer("Начинаю синхронизацию")
+            async with redis_client as cache:
+                token = await cache.get("mosru_token")
+
+            task = await report_process_to_ecm.kiq(token)
+            await task.wait_result()
+            await event.message.answer("Синхронизация завершена")
+
+        except Exception as e:
+            logger.warning(f"Sync error {e}")
+            await event.message.answer("Произошла ошибка при синхронизации")

@@ -4,8 +4,6 @@ from bot.ecm.router import router as ecm_router
 from utils.max_bot import dp, bot
 
 
-
-
 dp.include_routers(
     mosru_router,
     ecm_router,

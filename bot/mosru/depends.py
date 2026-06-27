@@ -15,6 +15,7 @@ from utils.max_bot import bot
 from utils.ecm import http_client
 from utils.ecm import ecm_client
 import pandas as pd
+from utils.broker_utils import broker
 
 
 UPLOAD_DIR = Path("temp")
@@ -122,6 +123,7 @@ async def create_report_xlsx(token: str) -> str:
     return file_path
 
 
+@broker.task
 async def report_process_to_ecm(token: str) -> list:
     excel_file = await download_file_http(
         url="https://prof.mos.ru/back/api/applications/report",
@@ -293,12 +295,14 @@ async def report_process_to_ecm(token: str) -> list:
         if row["id"] != 0:
             record = await ecm_client.get_data(
                 query={
-                    "records": [f"emodel/admission-committee:itmoscow-statements@{row["id"]}"],
+                    "records": [
+                        f"emodel/admission-committee:itmoscow-statements@{row['id']}"
+                    ],
                     "attributes": ["statement-applicant-name"],
                     "version": 1,
                 }
             )
-            if record['records'][0]['attributes']['statement-applicant-name'] is None:
+            if record["records"][0]["attributes"]["statement-applicant-name"] is None:
                 ecm_id = "emodel/admission-committee:itmoscow-statements@"
             else:
                 ecm_id = f"emodel/admission-committee:itmoscow-statements@{row['id']}"
@@ -312,9 +316,13 @@ async def report_process_to_ecm(token: str) -> list:
                     "statement-comment-mcrpo": f"{row['Примечание от МЦРПО'] if pd.notna(row['Примечание от МЦРПО']) else ''}",
                     "statement-sorce": f"{statement_sorce_options.get(row['Источник'], '0')}",
                     "statement-verifi": f"{statement_verifi_options.get(row['Межвед. проверки'], '1')}",
-                    "statement-status-change-date": datetime.strptime(row['Изменение статуса'], '%d.%m.%Y').strftime('%Y-%m-%d'),
+                    "statement-status-change-date": datetime.strptime(
+                        row["Изменение статуса"], "%d.%m.%Y"
+                    ).strftime("%Y-%m-%d"),
                     "statement-number": f"{row['Номер']}",
-                    "statement-registration-date": datetime.strptime(row['Зарегистрирован'], '%d.%m.%Y %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%S+03:00'),
+                    "statement-registration-date": datetime.strptime(
+                        row["Зарегистрирован"], "%d.%m.%Y %H:%M:%S"
+                    ).strftime("%Y-%m-%dT%H:%M:%S+03:00"),
                     "statement-applicant-name": f"{row['ФИО']}",
                     "statement-applicant-sex": f"{statement_applicant_sex_options.get(row['Пол'])}",
                     "statement-applicant-citizenship": f"{row['Гражданство'] if pd.notna(row['Гражданство']) else ''}",
@@ -322,7 +330,11 @@ async def report_process_to_ecm(token: str) -> list:
                     "statement-applicant-passport-series": f"{row['Серия ДУЛ'] if pd.notna(row['Серия ДУЛ']) else ''}",
                     "statement-applicant-passport-number": f"{row['Номер ДУЛ'] if pd.notna(row['Номер ДУЛ']) else ''}",
                     "statement-applicant-passport-issued": f"{row['Кем выдан ДУЛ'] if pd.notna(row['Кем выдан ДУЛ']) else ''}",
-                    "statement-applicant-passport-issued-date1": datetime.strptime(row['Дата выдачи ДУЛ'], '%d.%m.%Y').strftime('%Y-%m-%d') if pd.notna(row['Дата выдачи ДУЛ']) else None,
+                    "statement-applicant-passport-issued-date1": datetime.strptime(
+                        row["Дата выдачи ДУЛ"], "%d.%m.%Y"
+                    ).strftime("%Y-%m-%d")
+                    if pd.notna(row["Дата выдачи ДУЛ"])
+                    else None,
                     "statement-applicant-passport-issued-code": f"{row['Код подразделения ДУЛ'] if pd.notna(row['Код подразделения ДУЛ']) else ''}",
                     "statement-specialization": f"{specs.get(row['Специальность'], '')}",
                     "statement-education-form": f"{statement_education_form_options.get(row['Форма обучения'], '0')}",
@@ -335,13 +347,21 @@ async def report_process_to_ecm(token: str) -> list:
                     "statement-education-document-series": f"{row['Серия документа об образовании'] if pd.notna(row['Серия документа об образовании']) else ''}",
                     "statement-education-document-number": f"{row['Номер документа об образовании'] if pd.notna(row['Номер документа об образовании']) else ''}",
                     "statement-education-document-issued": f"{row['Организация, выдавшая документ об образовании (школа)'] if pd.notna(row['Организация, выдавшая документ об образовании (школа)']) else ''}",
-                    "statement-education-document-issued-date1": datetime.strptime(row['Дата выдачи документа об образовании'], '%d.%m.%Y').strftime('%Y-%m-%d') if pd.notna(row['Дата выдачи документа об образовании']) else None,
+                    "statement-education-document-issued-date1": datetime.strptime(
+                        row["Дата выдачи документа об образовании"], "%d.%m.%Y"
+                    ).strftime("%Y-%m-%d")
+                    if pd.notna(row["Дата выдачи документа об образовании"])
+                    else None,
                     "statement-education-document-issued-place": f"{row['Место выдачи аттестата'] if pd.notna(row['Место выдачи аттестата']) else ''}",
                     "statement-applicant-phone": f"{row['Контактный телефон'] if pd.notna(row['Контактный телефон']) else ''}",
                     "statement-applicant-email": f"{row['Электронная почта'] if pd.notna(row['Электронная почта']) else ''}",
                     "statement-applicant-snils": f"{row['СНИЛС'] if pd.notna(row['СНИЛС']) else ''}",
                     "statement-applicant-registration-type": f"{row['Тип регистрации'] if pd.notna(row['Тип регистрации']) else ''}",
-                    "statement-applicant-datebirth": datetime.strptime(row['Дата рождения'], '%d.%m.%Y').strftime('%Y-%m-%d') if pd.notna(row['Дата рождения']) else None,
+                    "statement-applicant-datebirth": datetime.strptime(
+                        row["Дата рождения"], "%d.%m.%Y"
+                    ).strftime("%Y-%m-%d")
+                    if pd.notna(row["Дата рождения"])
+                    else None,
                     "statement-applicant-registration-country": f"{row['Место регистрации'] if pd.notna(row['Место регистрации']) else ''}",
                     "statement-applicant-registration-adress-full": f"{row['Полный адрес'] if pd.notna(row['Полный адрес']) else ''}",
                     "statement-applicant-registration-place": f"{row['Место регистрации'] if pd.notna(row['Место регистрации']) else ''}",
@@ -352,10 +372,16 @@ async def report_process_to_ecm(token: str) -> list:
                     "statement-applicant-registration-house": f"{row['Дом, строение, корпус'] if pd.notna(row['Дом, строение, корпус']) else ''}",
                     "statement-applicant-registration-apartament": f"{row['Квартира'] if pd.notna(row['Квартира']) else ''}",
                     "statement-graduation-year": f"{row['Год окончания'] if pd.notna(row['Год окончания']) else ''}",
-                    "statement-primary-points": row["Сумма первичных баллов"] if pd.notna(row["Сумма первичных баллов"]) else None,
-                    "statement-average-score": row["Средний балл ГИА"] if pd.notna(row["Средний балл ГИА"]) else None,
+                    "statement-primary-points": row["Сумма первичных баллов"]
+                    if pd.notna(row["Сумма первичных баллов"])
+                    else None,
+                    "statement-average-score": row["Средний балл ГИА"]
+                    if pd.notna(row["Средний балл ГИА"])
+                    else None,
                     "statement-state-exam-type": f"{statement_state_exam_type.get(row['Тип ГИА'], '0')}",
-                    "statement-state-exam-count": row["Количество предметов ГИА"] if pd.notna(row["Количество предметов ГИА"]) else None,
+                    "statement-state-exam-count": row["Количество предметов ГИА"]
+                    if pd.notna(row["Количество предметов ГИА"])
+                    else None,
                     "statement-priority-admission": f"{statement_priority_admission_options.get(row['Приоритет поступления'], '0')}",
                     "statement-priority-admission-category": f"{row['Категория'] if pd.notna(row['Категория']) else ''}",
                     "statement-priority-num": f"{row['applicationPriority']}",
