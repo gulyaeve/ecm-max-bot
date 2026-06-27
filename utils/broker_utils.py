@@ -1,19 +1,13 @@
 from asyncio import run
-from concurrent.futures import ProcessPoolExecutor
+from typing import Literal, Optional
 
 from bot.mosru.depends import report_process_to_ecm
 
-# from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
 
-# from config import settings
-
-# result_backend = RedisAsyncResultBackend(redis_url=settings.redis_url)
-
-# broker = RedisStreamBroker(url=settings.redis_url).with_result_backend(result_backend)
-
-process_pool = ProcessPoolExecutor(max_workers=4)
-
-
-def sync_ecm_report(token: str):
+def sync_ecm_report(
+    token: str,
+    max_id_report: Optional[int] = None,
+    mode: Literal["sync", "add_new"] = "sync",
+):
     # Запускаем асинхронную функцию внутри отдельного процесса
-    return run(report_process_to_ecm(token))
+    return run(report_process_to_ecm(token, max_id_report, mode))

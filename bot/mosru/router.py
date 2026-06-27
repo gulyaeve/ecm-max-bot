@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ProcessPoolExecutor
 
 from maxapi import F
 from maxapi.dispatcher import Router
@@ -66,13 +67,33 @@ async def sync_applications_from_proftech_to_ecm(event: MessageCreated):
             async with redis_client as cache:
                 token = await cache.get("mosru_token")
 
+            process_pool = ProcessPoolExecutor(max_workers=4)
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(
-                process_pool,
-                sync_ecm_report,
-                token,
+                process_pool, sync_ecm_report, token, event.from_user.user_id, "sync"
             )
 
         except Exception as e:
             logger.warning(f"Sync error {e}")
             await event.message.answer("Произошла ошибка при синхронизации")
+
+
+@router.message_created(Command("add_applications"))
+async def add_applications_from_proftech_to_ecm(event: MessageCreated):
+    ecm_user_login = await ecm_client.get_user_login_from_ecm(event.from_user.user_id)
+
+    if ecm_user_login in settings.ECM_LOGINS_FOR_REPORT:
+        try:
+            await event.message.answer("Начинаю добавление новых")
+            async with redis_client as cache:
+                token = await cache.get("mosru_token")
+
+            process_pool = ProcessPoolExecutor(max_workers=4)
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                process_pool, sync_ecm_report, token, event.from_user.user_id, "add_new"
+            )
+
+        except Exception as e:
+            logger.warning(f"Sync error {e}")
+            await event.message.answer("Произошла ошибка при добавлении")

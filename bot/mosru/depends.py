@@ -3,7 +3,7 @@ import zipfile
 from asyncio import sleep
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import anyio
 import pandas as pd
@@ -120,7 +120,11 @@ async def create_report_xlsx(token: str) -> str:
     return file_path
 
 
-async def report_process_to_ecm(token: str):
+async def report_process_to_ecm(
+    token: str,
+    max_id_report: Optional[int] = None,
+    mode: Literal["sync", "add_new"] = "sync",
+):
     excel_file = await download_file_http(
         url="https://prof.mos.ru/back/api/applications/report",
         token=token,
@@ -287,6 +291,8 @@ async def report_process_to_ecm(token: str):
     for doc_type in doc_types_from_ecm["records"]:
         doc_types[doc_type["attributes"]["name"]] = doc_type["id"]
 
+    updated = 0
+    added_new = 0
     for index, row in df_result.iterrows():
         if row["id"] != 0:
             record = await ecm_client.get_data(
@@ -300,8 +306,10 @@ async def report_process_to_ecm(token: str):
             )
             if record["records"][0]["attributes"]["statement-applicant-name"] is None:
                 ecm_id = "emodel/admission-committee:itmoscow-statements@"
+                added_new += 1
             else:
                 ecm_id = f"emodel/admission-committee:itmoscow-statements@{row['id']}"
+                updated += 1
             application = {
                 # "id": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
                 # "id": "emodel/admission-committee:itmoscow-statements@",
@@ -389,8 +397,24 @@ async def report_process_to_ecm(token: str):
             }
             try:
                 await sleep(0.2)
-                await ecm_client.add_records([application])
+                if (
+                    mode == "add_new"
+                    and ecm_id == "emodel/admission-committee:itmoscow-statements@"
+                ):
+                    await ecm_client.add_records([application])
+                    # if max_id_report is not None:
+                    #     await bot.send_message(
+                    #         user_id=max_id_report,
+                    #         text=f"Добавлено заявление номер {row['id']}\n",
+                    #     )
+                elif mode == "sync":
+                    await ecm_client.add_records([application])
             except Exception as e:
                 logger.warning(f"failed {row['id']} {e}")
             # data_to_ecm.append(application)
+    if max_id_report is not None:
+        await bot.send_message(
+            user_id=max_id_report,
+            text=f"Завершено\nОбновлено: {updated}\nДобавлено: {added_new}",
+        )
     # return data_to_ecm
