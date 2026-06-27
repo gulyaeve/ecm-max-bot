@@ -396,11 +396,11 @@ async def report_process_to_ecm(
                 },
             }
             try:
-                await sleep(0.2)
                 if (
                     mode == "add_new"
                     and ecm_id == "emodel/admission-committee:itmoscow-statements@"
                 ):
+                    await sleep(0.2)
                     await ecm_client.add_records([application])
                     # if max_id_report is not None:
                     #     await bot.send_message(
@@ -408,6 +408,7 @@ async def report_process_to_ecm(
                     #         text=f"Добавлено заявление номер {row['id']}\n",
                     #     )
                 elif mode == "sync":
+                    await sleep(0.2)
                     await ecm_client.add_records([application])
             except Exception as e:
                 logger.warning(f"failed {row['id']} {e}")
