@@ -306,10 +306,8 @@ async def report_process_to_ecm(
             )
             if record["records"][0]["attributes"]["statement-applicant-name"] is None:
                 ecm_id = "emodel/admission-committee:itmoscow-statements@"
-                added_new += 1
             else:
                 ecm_id = f"emodel/admission-committee:itmoscow-statements@{row['id']}"
-                updated += 1
             application = {
                 # "id": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
                 # "id": "emodel/admission-committee:itmoscow-statements@",
@@ -402,6 +400,7 @@ async def report_process_to_ecm(
                 ):
                     await sleep(0.2)
                     await ecm_client.add_records([application])
+                    added_new += 1
                     # if max_id_report is not None:
                     #     await bot.send_message(
                     #         user_id=max_id_report,
@@ -410,6 +409,10 @@ async def report_process_to_ecm(
                 elif mode == "sync":
                     await sleep(0.2)
                     await ecm_client.add_records([application])
+                    if ecm_id == "emodel/admission-committee:itmoscow-statements@":
+                        added_new += 1
+                    else:
+                        updated += 1
             except Exception as e:
                 logger.warning(f"failed {row['id']} {e}")
             # data_to_ecm.append(application)
