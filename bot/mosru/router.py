@@ -63,9 +63,7 @@ async def sync_applications_from_proftech_to_ecm(event: MessageCreated):
             async with redis_client as cache:
                 token = await cache.get("mosru_token")
 
-            task = await report_process_to_ecm.kiq(token)
-            await task.wait_result()
-            await event.message.answer("Синхронизация завершена")
+            await report_process_to_ecm.kiq(token)
 
         except Exception as e:
             logger.warning(f"Sync error {e}")
