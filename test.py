@@ -19,7 +19,7 @@ async def main():
     # print(result)
     token = os.getenv("TOKEN_TEST")
 
-    await report_process_to_ecm(token)
+    # await report_process_to_ecm(token)
     # print(len(data_to_ecm))
     # for applicant in data_to_ecm:
     #     record = await ecm_client.get_data(
@@ -39,8 +39,8 @@ async def main():
 
     # record = await ecm_client.get_data(
     #     query={
-    #         "records": ["emodel/admission-committee:itmoscow-statements@54441081222"],
-    #         "attributes": ["statement-applicant-name"],
+    #         "records": ["emodel/admission-committee:itmoscow-statements@54441081"],
+    #         "attributes": ["?json"],
     #         "version": 1,
     #     }
     # )
@@ -52,6 +52,26 @@ async def main():
     #     upload_records = await ecm_client.add_records(chunk)
 
     # df_result.to_excel('merged_output.xlsx', index=False, engine='openpyxl')
+
+    resp = await http_client.post(
+        url="https://prof.mos.ru/back/api/applications/search",
+        json={
+            "learningYearId": 1002678188,
+            "rklCheckStatuses": [],
+            "applicationPriority": [],
+            # "applicantTypes": ["NINE_MSC","NINE_NOT_MSC","ELEVEN"],
+            "applicantTypes": ["NINE_NOT_MSC"],
+            "page": 0,
+            "size": 10000,
+            "sort": ["registrationDateTime,desc"],
+        },
+        headers={
+            "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+            "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+            "X-Mes-Subsystem": "proftechw_app",
+        },
+    )
+    pprint(resp.json())
 
 
 if __name__ == "__main__":
