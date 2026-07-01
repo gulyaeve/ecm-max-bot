@@ -502,7 +502,7 @@ async def report_process_to_ecm(
 
     for index, row in df_result.iterrows():
         if row["id"] != 0:
-            tasks.append(applicant_worker, semaphore, row, mode, counters, types_options)
+            tasks.append(applicant_worker(semaphore, row, mode, counters, types_options))
             # record = await ecm_client.get_data(
             #     query={
             #         "records": [
