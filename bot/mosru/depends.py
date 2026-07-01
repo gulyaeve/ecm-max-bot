@@ -274,11 +274,7 @@ async def applicant_worker(semaphore, row, mode, counters, types_options):
                 # await sleep(0.2)
                 await ecm_client.add_records([application])
                 counters["added_new"] += 1
-                # if max_id_report is not None:
-                #     await bot.send_message(
-                #         user_id=max_id_report,
-                #         text=f"Добавлено заявление номер {row['id']}\n",
-                #     )
+
             elif mode == "sync":
                 # await sleep(0.2)
                 await ecm_client.add_records([application])
@@ -288,6 +284,7 @@ async def applicant_worker(semaphore, row, mode, counters, types_options):
                     counters["updated"] += 1
         except Exception as e:
             logger.warning(f"failed {row['id']} {e}")
+            counters["errors"] += 1
 
 
 async def report_process_to_ecm(
@@ -493,143 +490,23 @@ async def report_process_to_ecm(
         "doc_types": doc_types
     }
 
-    # updated = 0
-    # added_new = 0
-    
-    counters = {"added_new": 0, "updated": 0}
+   
+    counters = {"added_new": 0, "updated": 0, "errors": 0}
     tasks = []
     semaphore = Semaphore(10)
 
     for index, row in df_result.iterrows():
         if row["id"] != 0:
             tasks.append(applicant_worker(semaphore, row, mode, counters, types_options))
-            # record = await ecm_client.get_data(
-            #     query={
-            #         "records": [
-            #             f"emodel/admission-committee:itmoscow-statements@{row['id']}"
-            #         ],
-            #         "attributes": ["statement-applicant-name"],
-            #         "version": 1,
-            #     }
-            # )
-            # if record["records"][0]["attributes"]["statement-applicant-name"] is None:
-            #     ecm_id = "emodel/admission-committee:itmoscow-statements@"
-            # else:
-            #     ecm_id = f"emodel/admission-committee:itmoscow-statements@{row['id']}"
-            # application = {
-            #     # "id": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
-            #     # "id": "emodel/admission-committee:itmoscow-statements@",
-            #     "id": ecm_id,
-            #     "attributes": {
-            #         "statement-type": f"{statement_type_options.get(row['Тип'], '0')}",
-            #         "statement-status": f"{statement_status_options.get(row['Статус'], '0')}",
-            #         "statement-comment-mcrpo": f"{row['Примечание от МЦРПО'] if pd.notna(row['Примечание от МЦРПО']) else ''}",
-            #         "statement-sorce": f"{statement_sorce_options.get(row['Источник'], '0')}",
-            #         "statement-verifi": f"{statement_verifi_options.get(row['Межвед. проверки'], '1')}",
-            #         "statement-status-change-date": datetime.strptime(
-            #             row["Изменение статуса"], "%d.%m.%Y"
-            #         ).strftime("%Y-%m-%d"),
-            #         "statement-number": f"{row['Номер']}",
-            #         "statement-registration-date": datetime.strptime(
-            #             row["Зарегистрирован"], "%d.%m.%Y %H:%M:%S"
-            #         ).strftime("%Y-%m-%dT%H:%M:%S+03:00"),
-            #         "statement-applicant-name": f"{row['ФИО']}",
-            #         "statement-applicant-sex": f"{statement_applicant_sex_options.get(row['Пол'])}",
-            #         "statement-applicant-citizenship": f"{row['Гражданство'] if pd.notna(row['Гражданство']) else ''}",
-            #         "statement-applicant-passport-type": f"{row['Тип документа, удостоверяющего личность'] if pd.notna(row['Тип документа, удостоверяющего личность']) else ''}",
-            #         "statement-applicant-passport-series": f"{row['Серия ДУЛ'] if pd.notna(row['Серия ДУЛ']) else ''}",
-            #         "statement-applicant-passport-number": f"{row['Номер ДУЛ'] if pd.notna(row['Номер ДУЛ']) else ''}",
-            #         "statement-applicant-passport-issued": f"{row['Кем выдан ДУЛ'] if pd.notna(row['Кем выдан ДУЛ']) else ''}",
-            #         "statement-applicant-passport-issued-date1": datetime.strptime(
-            #             row["Дата выдачи ДУЛ"], "%d.%m.%Y"
-            #         ).strftime("%Y-%m-%d")
-            #         if pd.notna(row["Дата выдачи ДУЛ"])
-            #         else None,
-            #         "statement-applicant-passport-issued-code": f"{row['Код подразделения ДУЛ'] if pd.notna(row['Код подразделения ДУЛ']) else ''}",
-            #         "statement-specialization": f"{specs.get(row['Специальность'], '')}",
-            #         "statement-education-form": f"{statement_education_form_options.get(row['Форма обучения'], '0')}",
-            #         "statement-financing": f"{statement_financing_options.get(row['Финансирование'], '0')}",
-            #         "statement-document-achivments": f"{statement_document_achivments_options.get(row['Документ о достижениях'], '0')}",
-            #         "statement-approval": f"{statement_approval_options.get(row['Согласие на зачисление'], '0')}",
-            #         "statement-entrance-test": f"{statement_entrance_test_options.get(row['Вступительные испытания'], '0')}",
-            #         "statement-reason-archiv": f"{row['Причина архивации'] if pd.notna(row['Причина архивации']) else ''}",
-            #         "statement-education-document-type": f"{doc_types.get(row['Тип документа об образовании'], '')}",
-            #         "statement-education-document-series": f"{row['Серия документа об образовании'] if pd.notna(row['Серия документа об образовании']) else ''}",
-            #         "statement-education-document-number": f"{row['Номер документа об образовании'] if pd.notna(row['Номер документа об образовании']) else ''}",
-            #         "statement-education-document-issued": f"{row['Организация, выдавшая документ об образовании (школа)'] if pd.notna(row['Организация, выдавшая документ об образовании (школа)']) else ''}",
-            #         "statement-education-document-issued-date1": datetime.strptime(
-            #             row["Дата выдачи документа об образовании"], "%d.%m.%Y"
-            #         ).strftime("%Y-%m-%d")
-            #         if pd.notna(row["Дата выдачи документа об образовании"])
-            #         else None,
-            #         "statement-education-document-issued-place": f"{row['Место выдачи аттестата'] if pd.notna(row['Место выдачи аттестата']) else ''}",
-            #         "statement-applicant-phone": f"{row['Контактный телефон'] if pd.notna(row['Контактный телефон']) else ''}",
-            #         "statement-applicant-email": f"{row['Электронная почта'] if pd.notna(row['Электронная почта']) else ''}",
-            #         "statement-applicant-snils": f"{row['СНИЛС'] if pd.notna(row['СНИЛС']) else ''}",
-            #         "statement-applicant-registration-type": f"{row['Тип регистрации'] if pd.notna(row['Тип регистрации']) else ''}",
-            #         "statement-applicant-datebirth": datetime.strptime(
-            #             row["Дата рождения"], "%d.%m.%Y"
-            #         ).strftime("%Y-%m-%d")
-            #         if pd.notna(row["Дата рождения"])
-            #         else None,
-            #         "statement-applicant-registration-country": f"{row['Место регистрации'] if pd.notna(row['Место регистрации']) else ''}",
-            #         "statement-applicant-registration-adress-full": f"{row['Полный адрес'] if pd.notna(row['Полный адрес']) else ''}",
-            #         "statement-applicant-registration-place": f"{row['Место регистрации'] if pd.notna(row['Место регистрации']) else ''}",
-            #         "statement-applicant-registration-city": f"{row['Населенный пункт/город'] if pd.notna(row['Населенный пункт/город']) else ''}",
-            #         "statement-applicant-registration-region": f"{row['Регион'] if pd.notna(row['Регион']) else ''}",
-            #         "statement-applicant-registration-street": f"{row['Улица'] if pd.notna(row['Улица']) else ''}",
-            #         "statement-applicant-registration-district": f"{row['Район'] if pd.notna(row['Район']) else ''}",
-            #         "statement-applicant-registration-house": f"{row['Дом, строение, корпус'] if pd.notna(row['Дом, строение, корпус']) else ''}",
-            #         "statement-applicant-registration-apartament": f"{row['Квартира'] if pd.notna(row['Квартира']) else ''}",
-            #         "statement-graduation-year": f"{row['Год окончания'] if pd.notna(row['Год окончания']) else ''}",
-            #         "statement-primary-points": row["Сумма первичных баллов"]
-            #         if pd.notna(row["Сумма первичных баллов"])
-            #         else None,
-            #         "statement-average-score": row["Средний балл ГИА"]
-            #         if pd.notna(row["Средний балл ГИА"])
-            #         else None,
-            #         "statement-state-exam-type": f"{statement_state_exam_type.get(row['Тип ГИА'], '0')}",
-            #         "statement-state-exam-count": row["Количество предметов ГИА"]
-            #         if pd.notna(row["Количество предметов ГИА"])
-            #         else None,
-            #         "statement-priority-admission": f"{statement_priority_admission_options.get(row['Приоритет поступления'], '0')}",
-            #         "statement-priority-admission-category": f"{row['Категория'] if pd.notna(row['Категория']) else ''}",
-            #         "statement-priority-num": f"{row['applicationPriority']}",
-            #         "statement-proftech-id": f"{row['id']}",
-            #         "statement-proftech-applicantTypes": f"{row['applicantType']}",
-            #         "_alias?str": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
-            #         "_state?str": "submitted",
-            #         "_workspace": "admission-committee",
-            #     },
-            # }
-            # try:
-            #     if (
-            #         mode == "add_new"
-            #         and ecm_id == "emodel/admission-committee:itmoscow-statements@"
-            #     ):
-            #         # await sleep(0.2)
-            #         await ecm_client.add_records([application])
-            #         added_new += 1
-            #         # if max_id_report is not None:
-            #         #     await bot.send_message(
-            #         #         user_id=max_id_report,
-            #         #         text=f"Добавлено заявление номер {row['id']}\n",
-            #         #     )
-            #     elif mode == "sync":
-            #         # await sleep(0.2)
-            #         await ecm_client.add_records([application])
-            #         if ecm_id == "emodel/admission-committee:itmoscow-statements@":
-            #             added_new += 1
-            #         else:
-            #             updated += 1
-            # except Exception as e:
-            #     logger.warning(f"failed {row['id']} {e}")
-            # data_to_ecm.append(application)
+
     await gather(*tasks)
 
     if max_id_report is not None:
+        report_message = f"Завершено\nОбновлено: {counters['updated']}\nДобавлено: {counters['added_new']}\n"
+        if counters.get("errors") != 0:
+            report_message += f"Ошибок: {counters['errors']}\n"
         await bot.send_message(
             user_id=max_id_report,
-            text=f"Завершено\nОбновлено: {counters['updated']}\nДобавлено: {counters['added_new']}",
+            text=report_message,
         )
     # return data_to_ecm
