@@ -285,7 +285,7 @@ async def applicant_worker(semaphore, row, mode, counters, types_options):
                 if ecm_id == "emodel/admission-committee:itmoscow-statements@":
                     counters["added_new"] += 1
                 else:
-                    counters["updeted"] += 1
+                    counters["updated"] += 1
         except Exception as e:
             logger.warning(f"failed {row['id']} {e}")
 
