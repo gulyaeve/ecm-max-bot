@@ -493,7 +493,7 @@ async def report_process_to_ecm(
    
     counters = {"added_new": 0, "updated": 0, "errors": 0}
     tasks = []
-    semaphore = Semaphore(10)
+    semaphore = Semaphore(100)
 
     for index, row in df_result.iterrows():
         if row["id"] != 0:

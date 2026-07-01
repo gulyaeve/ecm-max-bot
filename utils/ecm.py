@@ -1,5 +1,7 @@
 from time import time
 from typing import Sequence
+
+import httpx
 from config import settings
 from httpx import AsyncClient
 
@@ -118,5 +120,12 @@ class ECMClient:
         return result
 
 
-http_client = AsyncClient()
+limits = httpx.Limits(
+    max_connections=250,          # Чуть больше, чем размер семафора
+    max_keepalive_connections=100, # Удерживаем сокеты теплыми, чтобы не тратить время на Handshake
+    keepalive_expiry=30.0          # Даем сокетам «пожить» подольше
+)
+timeout = httpx.Timeout(15.0, pool=5.0) # Защита от зависания пула
+
+http_client = httpx.AsyncClient()
 ecm_client = ECMClient(client=http_client)
