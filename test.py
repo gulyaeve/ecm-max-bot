@@ -5,7 +5,7 @@ from pprint import pprint
 
 from httpx import AsyncClient
 
-from bot.mosru.depends import report_process_to_ecm
+from bot.mosru.depends import report_process_to_ecm, create_report_xlsx
 from utils.ecm import ECMClient
 
 
@@ -53,25 +53,26 @@ async def main():
 
     # df_result.to_excel('merged_output.xlsx', index=False, engine='openpyxl')
 
-    resp = await http_client.post(
-        url="https://prof.mos.ru/back/api/applications/search",
-        json={
-            "learningYearId": 1002678188,
-            "rklCheckStatuses": [],
-            "applicationPriority": [],
-            # "applicantTypes": ["NINE_MSC","NINE_NOT_MSC","ELEVEN"],
-            "applicantTypes": ["NINE_NOT_MSC"],
-            "page": 0,
-            "size": 10000,
-            "sort": ["registrationDateTime,desc"],
-        },
-        headers={
-            "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
-            "Authorization": f"Bearer {token}",  # Передаем токен авторизации
-            "X-Mes-Subsystem": "proftechw_app",
-        },
-    )
-    pprint(resp.json())
+    # resp = await http_client.post(
+    #     url="https://prof.mos.ru/back/api/applications/search",
+    #     json={
+    #         "learningYearId": 1002678188,
+    #         "rklCheckStatuses": [],
+    #         "applicationPriority": [],
+    #         # "applicantTypes": ["NINE_MSC","NINE_NOT_MSC","ELEVEN"],
+    #         "applicantTypes": ["NINE_NOT_MSC"],
+    #         "page": 0,
+    #         "size": 10000,
+    #         "sort": ["registrationDateTime,desc"],
+    #     },
+    #     headers={
+    #         "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+    #         "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+    #         "X-Mes-Subsystem": "proftechw_app",
+    #     },
+    # )
+    # pprint(resp.json())
+    await create_report_xlsx(token)
 
 
 if __name__ == "__main__":

@@ -78,28 +78,56 @@ async def create_report_xlsx(token: str) -> str:
         http_client=http_client,
     )
 
-    resp = await http_client.post(
-        url="https://prof.mos.ru/back/api/applications/search",
-        json={
-            "learningYearId": 1002678188,
-            "rklCheckStatuses": [],
-            "applicationPriority": [],
-            "page": 0,
-            "size": 1000,
-            "sort": ["registrationDateTime,desc"],
-        },
-        headers={
-            "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
-            "Authorization": f"Bearer {token}",  # Передаем токен авторизации
-            "X-Mes-Subsystem": "proftechw_app",
-        },
-    )
+    # resp = await http_client.post(
+    #     url="https://prof.mos.ru/back/api/applications/search",
+    #     json={
+    #         "learningYearId": 1002678188,
+    #         "rklCheckStatuses": [],
+    #         "applicationPriority": [],
+    #         "page": 0,
+    #         "size": 1000,
+    #         "sort": ["registrationDateTime,desc"],
+    #     },
+    #     headers={
+    #         "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+    #         "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+    #         "X-Mes-Subsystem": "proftechw_app",
+    #     },
+    # )
 
     df_excel = pd.read_excel(excel_file, header=1, dtype=str)
 
     # print(df_excel.head())
 
-    df_json = pd.DataFrame(resp.json()["content"])
+    dfs_json = []
+    for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
+        resp = await http_client.post(
+            url="https://prof.mos.ru/back/api/applications/search",
+            json={
+                "learningYearId": 1002678188,
+                "rklCheckStatuses": [],
+                "applicationPriority": [],
+                "applicantTypes": [applicant_type],
+                "page": 0,
+                "size": 10000,
+                "sort": ["registrationDateTime,desc"],
+            },
+            headers={
+                "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+                "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+                "X-Mes-Subsystem": "proftechw_app",
+            },
+        )
+        applicants = resp.json()["content"]
+        for applicant in applicants:
+            applicant["applicantType"] = applicant_type
+        df_resp = pd.DataFrame(applicants)
+        dfs_json.append(df_resp)
+    
+
+    df_json = pd.concat(dfs_json)
+
+    # df_json = pd.DataFrame(resp.json()["content"])
     # print(df_json.head())
 
     # excel_key_column = df_excel.columns[6]
@@ -138,6 +166,9 @@ async def report_process_to_ecm(
         http_client=http_client,
     )
 
+    df_excel = pd.read_excel(excel_file, header=1, dtype=str)
+
+
     dfs_json = []
     for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
         resp = await http_client.post(
@@ -157,22 +188,17 @@ async def report_process_to_ecm(
                 "X-Mes-Subsystem": "proftechw_app",
             },
         )
-        result = resp.json()["content"]
-        result["applicantType"] = applicant_type
-        df_resp = pd.DataFrame(result)
+        applicants = resp.json()["content"]
+        for applicant in applicants:
+            applicant["applicantType"] = applicant_type
+        df_resp = pd.DataFrame(applicants)
         dfs_json.append(df_resp)
-
-    df_excel = pd.read_excel(excel_file, header=1, dtype=str)
 
     df_json = pd.concat(dfs_json)
 
     # print(df_excel.head())
-
-    # df_json = pd.DataFrame(resp.json()["content"])
-
     # print(df_json.head())
 
-    # excel_key_column = df_excel.columns[6]
     df_result = pd.merge(
         df_excel,
         df_json,
