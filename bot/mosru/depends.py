@@ -256,7 +256,7 @@ async def applicant_worker(semaphore, row, mode, counters, types_options):
                 "statement-state-exam-count": row["Количество предметов ГИА"]
                 if pd.notna(row["Количество предметов ГИА"])
                 else None,
-                "statement-priority-admission": f"{statement_priority_admission_options.get(row['Приоритет поступления'], '0')}",
+                "statement-priority-admission": f"{statement_priority_admission_options.get(row['Приоритетное право'], '0')}",
                 "statement-priority-admission-category": f"{row['Категория'] if pd.notna(row['Категория']) else ''}",
                 "statement-priority-num": f"{row['applicationPriority']}",
                 "statement-proftech-id": f"{row['id']}",
