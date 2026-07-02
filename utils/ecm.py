@@ -127,5 +127,5 @@ limits = httpx.Limits(
 )
 timeout = httpx.Timeout(15.0, pool=5.0) # Защита от зависания пула
 
-http_client = httpx.AsyncClient()
+http_client = httpx.AsyncClient(limits=limits, timeout=timeout)
 ecm_client = ECMClient(client=http_client)
