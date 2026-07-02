@@ -66,66 +66,76 @@ async def create_reports_zip(token: str) -> Optional[str]:
 
 
 async def create_report_xlsx(token: str) -> str:
-    excel_file = await download_file_http(
-        url="https://prof.mos.ru/back/api/applications/report",
-        token=token,
-        json={
-            "learningYearId": 1002678188,
-            "rklCheckStatuses": [],
-            "applicationPriority": [],
-            "page": 0,
-            "size": 10,
-            "sort": ["registrationDateTime,desc"],
-        },
-        http_client=http_client,
-    )
-
-    # resp = await http_client.post(
-    #     url="https://prof.mos.ru/back/api/applications/search",
-    #     json={
-    #         "learningYearId": 1002678188,
-    #         "rklCheckStatuses": [],
-    #         "applicationPriority": [],
-    #         "page": 0,
-    #         "size": 1000,
-    #         "sort": ["registrationDateTime,desc"],
-    #     },
-    #     headers={
-    #         "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
-    #         "Authorization": f"Bearer {token}",  # Передаем токен авторизации
-    #         "X-Mes-Subsystem": "proftechw_app",
-    #     },
-    # )
-
-    df_excel = pd.read_excel(excel_file, header=1, dtype=str)
-
-    # print(df_excel.head())
-
-    dfs_json = []
-    for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
-        resp = await http_client.post(
-            url="https://prof.mos.ru/back/api/applications/search",
+    try:
+        excel_file = await download_file_http(
+            url="https://prof.mos.ru/back/api/applications/report",
+            token=token,
             json={
                 "learningYearId": 1002678188,
                 "rklCheckStatuses": [],
                 "applicationPriority": [],
-                "applicantTypes": [applicant_type],
                 "page": 0,
-                "size": 10000,
+                "size": 10,
                 "sort": ["registrationDateTime,desc"],
             },
-            headers={
-                "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
-                "Authorization": f"Bearer {token}",  # Передаем токен авторизации
-                "X-Mes-Subsystem": "proftechw_app",
-            },
+            http_client=http_client,
         )
-        applicants = resp.json()["content"]
-        for applicant in applicants:
-            applicant["applicantType"] = applicant_type
-        df_resp = pd.DataFrame(applicants)
-        dfs_json.append(df_resp)
-    
+
+        # resp = await http_client.post(
+        #     url="https://prof.mos.ru/back/api/applications/search",
+        #     json={
+        #         "learningYearId": 1002678188,
+        #         "rklCheckStatuses": [],
+        #         "applicationPriority": [],
+        #         "page": 0,
+        #         "size": 1000,
+        #         "sort": ["registrationDateTime,desc"],
+        #     },
+        #     headers={
+        #         "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+        #         "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+        #         "X-Mes-Subsystem": "proftechw_app",
+        #     },
+        # )
+
+        df_excel = pd.read_excel(excel_file, header=1, dtype=str)
+
+        # print(df_excel.head())
+
+        dfs_json = []
+        for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
+            resp = await http_client.post(
+                url="https://prof.mos.ru/back/api/applications/search",
+                json={
+                    "learningYearId": 1002678188,
+                    "rklCheckStatuses": [],
+                    "applicationPriority": [],
+                    "applicantTypes": [applicant_type],
+                    "page": 0,
+                    "size": 10000,
+                    "sort": ["registrationDateTime,desc"],
+                },
+                headers={
+                    "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+                    "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+                    "X-Mes-Subsystem": "proftechw_app",
+                },
+            )
+            applicants = resp.json()["content"]
+            for applicant in applicants:
+                applicant["applicantType"] = applicant_type
+            df_resp = pd.DataFrame(applicants)
+            dfs_json.append(df_resp)
+    except HTTPStatusError as exc:
+        if exc.response.status_code == 401:
+            logger.warning("Ошибка: Невалидный Bearer токен!")
+
+            await bot.send_message(
+                user_id=settings.MAX_ID_TOKEN_HOLDER,
+                text="Добрый день! Обновите, пожалуйста, токен.\n\nС наилучшими пожеланиями, ИТ.Москва",
+            )
+
+        logger.warning("Ошибка внешнего сервера!")
 
     df_json = pd.concat(dfs_json)
 
@@ -292,47 +302,60 @@ async def report_process_to_ecm(
     max_id_report: Optional[int] = None,
     mode: Literal["sync", "add_new"] = "sync",
 ):
-    excel_file = await download_file_http(
-        url="https://prof.mos.ru/back/api/applications/report",
-        token=token,
-        json={
-            "learningYearId": 1002678188,
-            "rklCheckStatuses": [],
-            "applicationPriority": [],
-            "page": 0,
-            "size": 10,
-            "sort": ["registrationDateTime,desc"],
-        },
-        http_client=http_client,
-    )
-
-    df_excel = pd.read_excel(excel_file, header=1, dtype=str)
-
-
-    dfs_json = []
-    for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
-        resp = await http_client.post(
-            url="https://prof.mos.ru/back/api/applications/search",
+    try:
+        excel_file = await download_file_http(
+            url="https://prof.mos.ru/back/api/applications/report",
+            token=token,
             json={
                 "learningYearId": 1002678188,
                 "rklCheckStatuses": [],
                 "applicationPriority": [],
-                "applicantTypes": [applicant_type],
                 "page": 0,
-                "size": 10000,
+                "size": 10,
                 "sort": ["registrationDateTime,desc"],
             },
-            headers={
-                "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
-                "Authorization": f"Bearer {token}",  # Передаем токен авторизации
-                "X-Mes-Subsystem": "proftechw_app",
-            },
+            http_client=http_client,
         )
-        applicants = resp.json()["content"]
-        for applicant in applicants:
-            applicant["applicantType"] = applicant_type
-        df_resp = pd.DataFrame(applicants)
-        dfs_json.append(df_resp)
+
+        df_excel = pd.read_excel(excel_file, header=1, dtype=str)
+
+
+        dfs_json = []
+    
+        for applicant_type in ["NINE_MSC", "NINE_NOT_MSC", "ELEVEN"]:
+            resp = await http_client.post(
+                url="https://prof.mos.ru/back/api/applications/search",
+                json={
+                    "learningYearId": 1002678188,
+                    "rklCheckStatuses": [],
+                    "applicationPriority": [],
+                    "applicantTypes": [applicant_type],
+                    "page": 0,
+                    "size": 10000,
+                    "sort": ["registrationDateTime,desc"],
+                },
+                headers={
+                    "Content-Type": "application/json",  # Говорим серверу, что хотим получить JSON
+                    "Authorization": f"Bearer {token}",  # Передаем токен авторизации
+                    "X-Mes-Subsystem": "proftechw_app",
+                },
+            )
+            applicants = resp.json()["content"]
+            for applicant in applicants:
+                applicant["applicantType"] = applicant_type
+            df_resp = pd.DataFrame(applicants)
+            dfs_json.append(df_resp)
+
+    except HTTPStatusError as exc:
+        if exc.response.status_code == 401:
+            logger.warning("Ошибка: Невалидный Bearer токен!")
+
+            await bot.send_message(
+                user_id=settings.MAX_ID_TOKEN_HOLDER,
+                text="Добрый день! Обновите, пожалуйста, токен.\n\nС наилучшими пожеланиями, ИТ.Москва",
+            )
+
+        logger.warning("Ошибка внешнего сервера!")
 
     df_json = pd.concat(dfs_json)
 
