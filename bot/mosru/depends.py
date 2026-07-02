@@ -258,7 +258,7 @@ async def applicant_worker(semaphore, row, mode, counters, types_options):
                 else None,
                 "statement-priority-admission": f"{statement_priority_admission_options.get(row['Приоритетное право'], '0')}",
                 "statement-priority-admission-category": f"{row['Категория'] if pd.notna(row['Категория']) else ''}",
-                "statement-priority-num": f"{row['applicationPriority'] if pd.notna(row['applicationPriority']) else ''}",
+                "statement-priority-num": f"{row['applicationPriority'] if pd.notna(row['applicationPriority']) else '0'}",
                 "statement-proftech-id": f"{row['id']}",
                 "statement-proftech-applicantTypes": f"{row['applicantType']}",
                 "_alias?str": f"emodel/admission-committee:itmoscow-statements@{row['id']}",
